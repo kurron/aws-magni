@@ -70,4 +70,61 @@ resource "aws_instance" "docker" {
 #    }
 }
 
+resource "aws_security_group" "elb" {
+    name = "elb"
+    description = "Firewall rules for the load balancer"
+
+    ingress {
+      from_port = 80
+      to_port = 80
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+      from_port = 0
+      to_port = 65535
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+        direction = "bi-dierectional"
+        purpose = "application"
+    }
+}
+
+resource "aws_elb" "load-balancer" {
+    name = "load-balancer"
+    availability_zones = ["${aws_instance.docker.*.availability_zone}"] 
+
+    listener {
+        instance_port = 80
+        instance_protocol = "http"
+        lb_port = 80
+        lb_protocol = "http"
+    }
+
+    health_check {
+        healthy_threshold = 2
+        unhealthy_threshold = 2
+        timeout = 3
+        target = "HTTP:80/operations/health"
+        interval = 30
+    }
+
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+    }
+
+    instances = ["${aws_instance.docker.*.id}"]
+    security_groups = ["${aws_security_group.elb.id}"]
+    cross_zone_load_balancing = true
+    idle_timeout = 400
+    connection_draining = true
+    connection_draining_timeout = 400
+}
 
