@@ -128,3 +128,44 @@ resource "aws_elb" "load-balancer" {
     connection_draining_timeout = 400
 }
 
+resource "aws_security_group" "redis" {
+    name = "redis"
+    description = "Firewall rules for ElastiCache"
+
+    ingress {
+      from_port = 6379
+      to_port = 6379
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+      from_port = 0
+      to_port = 65535
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+        direction = "bi-dierectional"
+        purpose = "application"
+    }
+}
+
+resource "aws_elasticache_cluster" "redis" {
+    cluster_id = "asgard"
+    engine = "redis"
+    engine_version = "2.8.19"
+    node_type = "cache.t2.micro"
+    num_cache_nodes = 1
+    parameter_group_name = "default.redis2.8"
+    port = 6379
+#   subnet_group_name = "foo"
+    security_group_ids = ["${aws_security_group.redis.id}"]
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+    }
+}
