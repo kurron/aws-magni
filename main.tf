@@ -3,6 +3,18 @@ provider "aws" {
     max_retries = 10
 }
 
+resource "aws_vpc" "asgard" {
+    cidr_block = "172.31.0.0/16"
+    instance_tenancy = "default"
+    enable_dns_support = true
+    enable_dns_hostnames = true
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+        purpose = "application"
+    }
+}
+
 resource "aws_security_group" "docker-host" {
     name = "docker-host"
     description = "Firewall rules to allow provisioning and application deployment"
