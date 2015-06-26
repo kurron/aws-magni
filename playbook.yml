@@ -1,0 +1,35 @@
+---
+- name: Set Up AWS Instance 
+  hosts: aws-instance 
+  tasks:
+      - hostname: name=kal-el
+#     - apt: "upgrade=dist state=present update_cache=true cache_valid_time=600"
+      - apt: "name={{ item }} state=present"
+        with_items:
+           - curl
+           - telnet
+           - wget
+           - tmux
+           - python-setuptools
+      - command: easy_install pip
+      - apt_key: state=present keyserver=keyserver.ubuntu.com id=36A1D7869245C8950F966E92D8576A8BA88D21E9
+      - apt_repository: repo='deb https://get.docker.io/ubuntu docker main' state=present
+      - apt: name=lxc-docker state=latest update_cache=true cache_valid_time=600
+      - user: name=ubuntu state=present groups=docker
+      - lineinfile: dest=/etc/default/docker line='DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4 -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"'
+      - lineinfile: dest=/etc/default/grub regexp='^GRUB_CMDLINE_LINUX=""' line='GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"'
+      - command: update-grub
+      - service: name=docker state=restarted
+      - pip: name=docker-compose extra_args='--upgrade'
+
+      - name: nginx
+        docker:
+            name: nginx
+            hostname: nginx
+            image: nginx 
+            state: started
+            restart_policy: always
+            pull: always
+            ports:
+            - "80:80"
+
