@@ -10,7 +10,7 @@ variable "instance_type" {
 
 variable "docker_instance_count" {
     description = "How many Docker instances to spin up."
-    default = 2 
+    default = 4 
 }
 
 variable "key_name" {
@@ -64,9 +64,8 @@ variable "availability_zones" {
     default = {
         "0"      = "us-east-1a"
         "1"      = "us-east-1b"
-        "2"      = "us-east-1c"
+        "2"      = "us-east-1d"
         "3"      = "us-east-1d"
-        "4"      = "us-east-1e"
     }
 }
 
