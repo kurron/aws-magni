@@ -59,3 +59,15 @@ variable "aws_amis" {
     }
 }
 
+variable "availability_zones" {
+    description = "The availability zone to place the Docker host in."
+    default = {
+        "0"      = "us-east-1a"
+        "1"      = "us-east-1b"
+        "2"      = "us-east-1c"
+        "3"      = "us-east-1d"
+        "4"      = "us-east-1e"
+    }
+}
+
+
