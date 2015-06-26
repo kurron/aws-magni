@@ -47,7 +47,7 @@ variable "key_path" {
 variable "aws_amis" {
     description = "AMI to build the instance from."
     default = {
-        us-east-1      = "ami-81ea1aea"
+        us-east-1      = "ami-47d5102c"
         us-west-1      = "ami-df6a8b9b"
         us-west-2      = "ami-5189a661"
         eu-west-1      = "ami-47a23a30"
