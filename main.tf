@@ -9,10 +9,9 @@ resource "aws_vpc" "asgard" {
     enable_dns_support = true
     enable_dns_hostnames = true
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
-        purpose = "application"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 
@@ -20,10 +19,9 @@ resource "aws_internet_gateway" "gateway" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
-        purpose = "application"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 
@@ -35,10 +33,9 @@ resource "aws_subnet" "zone-subnet" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
-        purpose = "application"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 
@@ -83,10 +80,9 @@ resource "aws_network_acl" "asgard" {
     }
 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
-        purpose = "application"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 
@@ -106,9 +102,9 @@ resource "aws_elasticache_cluster" "redis" {
     port = 6379
     subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 
@@ -127,10 +123,9 @@ resource "aws_instance" "docker" {
     subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        purpose = "docker-container"
-        created-by = "Terraform"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 
     # run Ansible to provision the box
@@ -165,9 +160,9 @@ resource "aws_elb" "load-balancer" {
     }
 
     tags {
-        Name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
+        Name = "${var.resource_name}"
+        provisioned-by = "${var.resource_provisioned_by}"
+        status = "${var.resource_status}"
     }
 }
 

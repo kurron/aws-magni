@@ -3,6 +3,21 @@ variable "aws_region" {
     default = "us-east-1"
 }
 
+variable "resource_name" {
+    description = "What name we should tag all of the resource with."
+    default = "Asgard Experiment"
+}
+
+variable "resource_status" {
+    description = "Should the resource be considered stable or unstable (a work in progress)."
+    default = "Unstable"
+}
+
+variable "resource_provisioned_by" {
+    description = "The tool that was used to provision the resource."
+    default = "Terraform"
+}
+
 variable "instance_type" {
     description = "AWS EC2 instance type."
     default = "t2.micro"
@@ -83,3 +98,5 @@ variable "subnets" {
         "3"      = "10.10.40.0/24"
     }
 }
+
+
