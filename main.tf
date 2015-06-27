@@ -9,7 +9,7 @@ resource "aws_vpc" "asgard" {
     enable_dns_support = true
     enable_dns_hostnames = true
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
@@ -20,7 +20,7 @@ resource "aws_internet_gateway" "gateway" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
@@ -28,14 +28,14 @@ resource "aws_internet_gateway" "gateway" {
 }
 
 resource "aws_subnet" "zone-subnet" {
-    count = 1 
+    count = "${var.az_count}" 
     availability_zone = "${lookup(var.availability_zones, count.index)}" 
     cidr_block = "${lookup(var.subnets, count.index)}"
     map_public_ip_on_launch = true
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
@@ -64,9 +64,18 @@ resource "aws_network_acl" "asgard" {
         to_port = 80
     }
 
+    ingress {
+        rule_no = 3
+        protocol = "tcp"
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 6379
+        to_port = 6379
+    }
+
     egress {
         protocol = "tcp"
-        rule_no = 3
+        rule_no = 100
         action = "allow"
         cidr_block =  "0.0.0.0/0"
         from_port = 0
@@ -74,10 +83,32 @@ resource "aws_network_acl" "asgard" {
     }
 
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
+    }
+}
+
+resource "aws_elasticache_subnet_group" "redis" {
+    description = "Subnet group for the Redis cluster"
+    name = "redis-cluster"
+    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
+}
+
+resource "aws_elasticache_cluster" "redis" {
+    cluster_id = "asgard"
+    engine = "redis"
+    engine_version = "2.8.19"
+    node_type = "cache.t2.micro"
+    num_cache_nodes = 1
+    parameter_group_name = "default.redis2.8"
+    port = 6379
+    subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
+    tags {
+        Name = "asgard"
+        realm = "experimental"
+        created-by = "Terraform"
     }
 }
 
@@ -96,7 +127,7 @@ resource "aws_instance" "docker" {
     subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
 
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         purpose = "docker-container"
         created-by = "Terraform"
@@ -134,31 +165,9 @@ resource "aws_elb" "load-balancer" {
     }
 
     tags {
-        name = "asgard"
+        Name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
     }
 }
 
-resource "aws_elasticache_subnet_group" "redis" {
-    description = "Subnet group for the Redis cluster"
-    name = "redis-cluster"
-    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
-}
-
-resource "aws_elasticache_cluster" "redis" {
-    cluster_id = "asgard"
-    engine = "redis"
-    engine_version = "2.8.19"
-    node_type = "cache.t2.micro"
-    num_cache_nodes = 1
-    parameter_group_name = "default.redis2.8"
-    port = 6379
-    subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
-#   security_group_ids = ["${aws_security_group.redis.id}"]
-    tags {
-        name = "asgard"
-        realm = "experimental"
-        created-by = "Terraform"
-    }
-}
