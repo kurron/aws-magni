@@ -15,7 +15,7 @@ variable "az_count" {
 
 variable "docker_instance_count" {
     description = "How many Docker instances to spin up."
-    default = 2 
+    default = 4 
 }
 
 variable "key_name" {
