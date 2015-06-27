@@ -10,7 +10,7 @@ variable "instance_type" {
 
 variable "docker_instance_count" {
     description = "How many Docker instances to spin up."
-    default = 4 
+    default = 1 
 }
 
 variable "key_name" {
@@ -69,4 +69,12 @@ variable "availability_zones" {
     }
 }
 
-
+variable "subnets" {
+    description = "The subnet masks to use for each availability zone"
+    default = {
+        "0"      = "10.10.10.0/24"
+        "1"      = "10.10.20.0/24"
+        "2"      = "10.10.30.0/24"
+        "3"      = "10.10.40.0/24"
+    }
+}

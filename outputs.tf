@@ -42,22 +42,6 @@ output "docker_subnet_id" {
   value = "${aws_instance.docker.count.index.subnet_id}"
 }
 
-output "elb_security_group_name" {
-  value = "${aws_security_group.elb.name}"
-}
-
-output "elb_security_group_id" {
-  value = "${aws_security_group.elb.id}"
-}
-
-output "elb_security_group_description" {
-  value = "${aws_security_group.elb.description}"
-}
-
-output "elb_security_group_vpc" {
-  value = "${aws_security_group.elb.vpc_id}"
-}
-
 output "elb_id" {
   value = "${aws_elb.load-balancer.id}"
 }

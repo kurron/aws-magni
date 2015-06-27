@@ -4,10 +4,34 @@ provider "aws" {
 }
 
 resource "aws_vpc" "asgard" {
-    cidr_block = "172.31.0.0/16"
+    cidr_block = "10.10.0.0/16"
     instance_tenancy = "default"
     enable_dns_support = true
     enable_dns_hostnames = true
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+        purpose = "application"
+    }
+}
+
+resource "aws_internet_gateway" "gateway" {
+    vpc_id = "${aws_vpc.asgard.id}"
+
+    tags {
+        realm = "experimental"
+        created-by = "Terraform"
+        purpose = "application"
+    }
+}
+
+resource "aws_subnet" "zone-subnet" {
+    count = 4 
+    availability_zone = "${lookup(var.availability_zones, count.index)}" 
+    cidr_block = "${lookup(var.subnets, count.index)}"
+    map_public_ip_on_launch = true
+    vpc_id = "${aws_vpc.asgard.id}"
+
     tags {
         realm = "experimental"
         created-by = "Terraform"
@@ -19,72 +43,12 @@ resource "aws_security_group" "docker-host" {
     name = "docker-host"
     description = "Firewall rules to allow provisioning and application deployment"
 
-    tags {
-        realm = "experimental"
-        created-by = "Terraform"
-        direction = "bi-dierectional"
-        purpose = "application"
+    ingress {
+      from_port = 22
+      to_port = 22
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
     }
-}
-
-resource "aws_security_group_rule" "inbound-ssh" {
-    type = "ingress"
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-
-    security_group_id = "${aws_security_group.docker-host.id}"
-}
-
-resource "aws_security_group_rule" "inbound-http" {
-    type = "ingress"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-
-    security_group_id = "${aws_security_group.docker-host.id}"
-}
-
-resource "aws_security_group_rule" "allow-all-outbound" {
-    type = "egress"
-    from_port = 0
-    to_port = 65535
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-
-    security_group_id = "${aws_security_group.docker-host.id}"
-}
-
-resource "aws_instance" "docker" {
-    connection {
-        user = "ubuntu"
-        key_file = "${lookup(var.key_path, var.aws_region)}"
-    }
-
-    count = "${var.docker_instance_count}"
-    ami = "${lookup(var.aws_amis, var.aws_region)}"
-    instance_type = "${var.instance_type}"
-    key_name = "${lookup(var.key_name, var.aws_region)}"
-    security_groups = ["${aws_security_group.docker-host.name}"]
-    availability_zone = "${lookup(var.availability_zones, count.index)}"
-
-    tags {
-        realm = "experimental"
-        purpose = "docker-container"
-        created-by = "Terraform"
-    }
-
-    # run Ansible to provision the box
-#    provisioner "local-exec" {
-#        command = "./provision-instance.sh ${self.public_ip} ${lookup(var.key_path, var.aws_region)}"
-#    }
-}
-
-resource "aws_security_group" "elb" {
-    name = "elb"
-    description = "Firewall rules for the load balancer"
 
     ingress {
       from_port = 80
@@ -108,9 +72,41 @@ resource "aws_security_group" "elb" {
     }
 }
 
+resource "aws_instance" "docker" {
+    connection {
+        user = "ubuntu"
+        key_file = "${lookup(var.key_path, var.aws_region)}"
+    }
+
+    count = "${var.docker_instance_count}"
+    ami = "${lookup(var.aws_amis, var.aws_region)}"
+    availability_zone = "${lookup(var.availability_zones, count.index)}"
+    instance_type = "${var.instance_type}"
+    key_name = "${lookup(var.key_name, var.aws_region)}"
+#   security_groups = ["${aws_security_group.docker-host.name}"]
+    subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
+
+    tags {
+        realm = "experimental"
+        purpose = "docker-container"
+        created-by = "Terraform"
+    }
+
+    # run Ansible to provision the box
+#    provisioner "local-exec" {
+#        command = "./provision-instance.sh ${self.public_ip} ${lookup(var.key_path, var.aws_region)}"
+#    }
+}
+
 resource "aws_elb" "load-balancer" {
     name = "load-balancer"
-    availability_zones = ["${aws_instance.docker.*.availability_zone}"] 
+    subnets = ["${aws_subnet.zone-subnet.*.id}"] 
+    instances = ["${aws_instance.docker.*.id}"]
+#   security_groups = ["${aws_security_group.elb.id}"]
+    cross_zone_load_balancing = true
+    idle_timeout = 400
+    connection_draining = true
+    connection_draining_timeout = 400
 
     listener {
         instance_port = 80
@@ -131,39 +127,12 @@ resource "aws_elb" "load-balancer" {
         realm = "experimental"
         created-by = "Terraform"
     }
-
-    instances = ["${aws_instance.docker.*.id}"]
-    security_groups = ["${aws_security_group.elb.id}"]
-    cross_zone_load_balancing = true
-    idle_timeout = 400
-    connection_draining = true
-    connection_draining_timeout = 400
 }
 
-resource "aws_security_group" "redis" {
-    name = "redis"
-    description = "Firewall rules for ElastiCache"
-
-    ingress {
-      from_port = 6379
-      to_port = 6379
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-      from_port = 0
-      to_port = 65535
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    tags {
-        realm = "experimental"
-        created-by = "Terraform"
-        direction = "bi-dierectional"
-        purpose = "application"
-    }
+resource "aws_elasticache_subnet_group" "redis" {
+    description = "Subnet group for the Redis cluster"
+    name = "redis-cluster"
+    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
 }
 
 resource "aws_elasticache_cluster" "redis" {
@@ -174,8 +143,8 @@ resource "aws_elasticache_cluster" "redis" {
     num_cache_nodes = 1
     parameter_group_name = "default.redis2.8"
     port = 6379
-#   subnet_group_name = "foo"
-    security_group_ids = ["${aws_security_group.redis.id}"]
+    subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
+#   security_group_ids = ["${aws_security_group.redis.id}"]
     tags {
         realm = "experimental"
         created-by = "Terraform"
