@@ -10,6 +10,8 @@ resource "aws_vpc" "asgard" {
     enable_dns_hostnames = true
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -20,6 +22,8 @@ resource "aws_internet_gateway" "gateway" {
 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -34,6 +38,8 @@ resource "aws_subnet" "zone-subnet" {
 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -81,6 +87,8 @@ resource "aws_network_acl" "asgard" {
 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -103,6 +111,8 @@ resource "aws_elasticache_cluster" "redis" {
     subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -124,6 +134,8 @@ resource "aws_instance" "docker" {
 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }
@@ -161,6 +173,8 @@ resource "aws_elb" "load-balancer" {
 
     tags {
         Name = "${var.resource_name}"
+        Owner = "${var.resource_owner}"
+        Purpose = "${var.resource_purpose}"
         provisioned-by = "${var.resource_provisioned_by}"
         status = "${var.resource_status}"
     }

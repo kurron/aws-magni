@@ -8,6 +8,16 @@ variable "resource_name" {
     default = "Asgard Experiment"
 }
 
+variable "resource_owner" {
+    description = "What organization owns the resource."
+    default = "Asgard Team"
+}
+
+variable "resource_purpose" {
+    description = "What is the purpose of the resource."
+    default = "Operations Experimentation"
+}
+
 variable "resource_status" {
     description = "Should the resource be considered stable or unstable (a work in progress)."
     default = "Unstable"
