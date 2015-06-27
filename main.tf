@@ -9,6 +9,7 @@ resource "aws_vpc" "asgard" {
     enable_dns_support = true
     enable_dns_hostnames = true
     tags {
+        name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
@@ -19,6 +20,7 @@ resource "aws_internet_gateway" "gateway" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
+        name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
         purpose = "application"
@@ -26,48 +28,16 @@ resource "aws_internet_gateway" "gateway" {
 }
 
 resource "aws_subnet" "zone-subnet" {
-    count = 4 
+    count = 1 
     availability_zone = "${lookup(var.availability_zones, count.index)}" 
     cidr_block = "${lookup(var.subnets, count.index)}"
     map_public_ip_on_launch = true
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
+        name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
-        purpose = "application"
-    }
-}
-
-resource "aws_security_group" "docker-host" {
-    name = "docker-host"
-    description = "Firewall rules to allow provisioning and application deployment"
-
-    ingress {
-      from_port = 22
-      to_port = 22
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    ingress {
-      from_port = 80
-      to_port = 80
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    egress {
-      from_port = 0
-      to_port = 65535
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-
-    tags {
-        realm = "experimental"
-        created-by = "Terraform"
-        direction = "bi-dierectional"
         purpose = "application"
     }
 }
@@ -80,13 +50,14 @@ resource "aws_instance" "docker" {
 
     count = "${var.docker_instance_count}"
     ami = "${lookup(var.aws_amis, var.aws_region)}"
-    availability_zone = "${lookup(var.availability_zones, count.index)}"
+    availability_zone = "${element( aws_subnet.zone-subnet.*.availability_zone, count.index )}"
     instance_type = "${var.instance_type}"
     key_name = "${lookup(var.key_name, var.aws_region)}"
 #   security_groups = ["${aws_security_group.docker-host.name}"]
     subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
 
     tags {
+        name = "asgard"
         realm = "experimental"
         purpose = "docker-container"
         created-by = "Terraform"
@@ -124,6 +95,7 @@ resource "aws_elb" "load-balancer" {
     }
 
     tags {
+        name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
     }
@@ -146,6 +118,7 @@ resource "aws_elasticache_cluster" "redis" {
     subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
 #   security_group_ids = ["${aws_security_group.redis.id}"]
     tags {
+        name = "asgard"
         realm = "experimental"
         created-by = "Terraform"
     }
