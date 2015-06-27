@@ -42,6 +42,45 @@ resource "aws_subnet" "zone-subnet" {
     }
 }
 
+resource "aws_network_acl" "asgard" {
+    vpc_id = "${aws_vpc.asgard.id}"
+    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
+
+    ingress {
+        rule_no = 1
+        protocol = "tcp"
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 22
+        to_port = 22
+    }
+
+    ingress {
+        rule_no = 2
+        protocol = "tcp"
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 80
+        to_port = 80
+    }
+
+    egress {
+        protocol = "tcp"
+        rule_no = 3
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 0
+        to_port = 65535
+    }
+
+    tags {
+        name = "asgard"
+        realm = "experimental"
+        created-by = "Terraform"
+        purpose = "application"
+    }
+}
+
 resource "aws_instance" "docker" {
     connection {
         user = "ubuntu"
