@@ -35,7 +35,7 @@ variable "instance_type" {
 
 variable "az_count" {
     description = "How many availability zones to target."
-    default = 1 
+    default = 4 
 }
 
 variable "key_name" {
