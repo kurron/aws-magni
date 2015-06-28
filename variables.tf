@@ -3,8 +3,8 @@ variable "aws_region" {
     default = "us-east-1"
 }
 
-variable "resource_name" {
-    description = "What name we should tag all of the resource with."
+variable "resource_group" {
+    description = "What group we should tag all of the resources with."
     default = "Asgard Experiment"
 }
 

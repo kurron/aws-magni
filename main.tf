@@ -9,11 +9,12 @@ resource "aws_vpc" "asgard" {
     enable_dns_support = true
     enable_dns_hostnames = true
     tags {
-        Name = "${var.resource_name}"
+        Name = "Asgard Cloud"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Cloud to hold the Asgard assets"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
@@ -21,11 +22,12 @@ resource "aws_internet_gateway" "gateway" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Asgard Gateway"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Internet gateway in and out of the VPC"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
@@ -37,20 +39,21 @@ resource "aws_subnet" "zone-subnet" {
     vpc_id = "${aws_vpc.asgard.id}"
 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Change Me"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Change Me"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
 resource "aws_network_acl" "asgard" {
     vpc_id = "${aws_vpc.asgard.id}"
-    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
+#   subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
 
     ingress {
-        rule_no = 1
+        rule_no = 100
         protocol = "tcp"
         action = "allow"
         cidr_block =  "0.0.0.0/0"
@@ -59,7 +62,7 @@ resource "aws_network_acl" "asgard" {
     }
 
     ingress {
-        rule_no = 2
+        rule_no = 101
         protocol = "tcp"
         action = "allow"
         cidr_block =  "0.0.0.0/0"
@@ -68,7 +71,7 @@ resource "aws_network_acl" "asgard" {
     }
 
     ingress {
-        rule_no = 3
+        rule_no = 102 
         protocol = "tcp"
         action = "allow"
         cidr_block =  "0.0.0.0/0"
@@ -86,11 +89,12 @@ resource "aws_network_acl" "asgard" {
     }
 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Asgard Firewall Rules"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Controls open ports"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
@@ -110,11 +114,12 @@ resource "aws_elasticache_cluster" "redis" {
     port = 6379
     subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Redis Cluster"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Provides fault-tolerant Redis instances"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
@@ -133,11 +138,12 @@ resource "aws_instance" "docker" {
     subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Docker Host ${count.index}"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Hosts Docker containers"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 
     # run Ansible to provision the box
@@ -172,11 +178,12 @@ resource "aws_elb" "load-balancer" {
     }
 
     tags {
-        Name = "${var.resource_name}"
+        Name = "Asgard Load Balander"
+        Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "${var.resource_purpose}"
-        provisioned-by = "${var.resource_provisioned_by}"
-        status = "${var.resource_status}"
+        Purpose = "Balances web traffic between instances"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
     }
 }
 
