@@ -48,56 +48,6 @@ resource "aws_subnet" "zone-subnet" {
     }
 }
 
-resource "aws_network_acl" "asgard" {
-    vpc_id = "${aws_vpc.asgard.id}"
-#   subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
-
-    ingress {
-        rule_no = 100
-        protocol = "tcp"
-        action = "allow"
-        cidr_block =  "0.0.0.0/0"
-        from_port = 22
-        to_port = 22
-    }
-
-    ingress {
-        rule_no = 101
-        protocol = "tcp"
-        action = "allow"
-        cidr_block =  "0.0.0.0/0"
-        from_port = 80
-        to_port = 80
-    }
-
-    ingress {
-        rule_no = 102 
-        protocol = "tcp"
-        action = "allow"
-        cidr_block =  "0.0.0.0/0"
-        from_port = 6379
-        to_port = 6379
-    }
-
-    egress {
-        protocol = "tcp"
-        rule_no = 100
-        action = "allow"
-        cidr_block =  "0.0.0.0/0"
-        from_port = 0
-        to_port = 65535
-    }
-
-    tags {
-        Name = "Asgard Firewall Rules"
-        Group = "${var.resource_group}"
-        Owner = "${var.resource_owner}"
-        Purpose = "Controls open ports"
-        Provisioner = "${var.resource_provisioned_by}"
-        Status = "${var.resource_status}"
-    }
-}
-
 resource "aws_elasticache_subnet_group" "redis" {
     description = "Subnet group for the Redis cluster"
     name = "redis-cluster"

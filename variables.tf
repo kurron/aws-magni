@@ -35,12 +35,12 @@ variable "instance_type" {
 
 variable "az_count" {
     description = "How many availability zones to target."
-    default = 4 
+    default = 1 
 }
 
 variable "docker_instance_count" {
     description = "How many Docker instances to spin up."
-    default = 4 
+    default = 1 
 }
 
 variable "key_name" {
