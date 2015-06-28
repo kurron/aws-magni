@@ -31,6 +31,23 @@ resource "aws_internet_gateway" "gateway" {
     }
 }
 
+resource "aws_route_table" "internet" {
+    vpc_id = "${aws_vpc.asgard.id}"
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = "${aws_internet_gateway.gateway.id}"
+    }
+
+    tags {
+        Name = "Asgard Gateway Route"
+        Group = "${var.resource_group}"
+        Owner = "${var.resource_owner}"
+        Purpose = "Use the gateway to access the internet"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
+    }
+}
+
 resource "aws_subnet" "zone-subnet" {
     count = "${var.az_count}" 
     availability_zone = "${lookup(var.availability_zones, count.index)}" 
@@ -46,6 +63,12 @@ resource "aws_subnet" "zone-subnet" {
         Provisioner = "${var.resource_provisioned_by}"
         Status = "${var.resource_status}"
     }
+}
+
+resource "aws_route_table_association" "subnet-route" {
+    count = "${var.az_count}" 
+    subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
+    route_table_id = "${aws_route_table.internet.id}"
 }
 
 resource "aws_elasticache_subnet_group" "redis" {
