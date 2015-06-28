@@ -73,18 +73,48 @@ resource "aws_elasticache_cluster" "redis" {
     }
 }
 
+resource "aws_security_group" "docker" {
+    name = "docker"
+    description = "Firewall rules for the Docker hosts"
+    vpc_id = "${aws_vpc.asgard.id}"
+    
+    ingress {
+      from_port = 22
+      to_port = 22 
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"] 
+    }
+    
+    egress {
+      from_port = 0
+      to_port = 65535
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    tags {
+        Name = "Docker Firewall Rules"
+        Group = "${var.resource_group}"
+        Owner = "${var.resource_owner}"
+        Purpose = "Controls port access to the Docker containers"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
+    }
+}
+
 resource "aws_instance" "docker" {
     connection {
         user = "ubuntu"
         key_file = "${lookup(var.key_path, var.aws_region)}"
     }
 
-    count = "${var.docker_instance_count}"
+    # put one instance in each AZ
+    count = "${var.az_count}"
     ami = "${lookup(var.aws_amis, var.aws_region)}"
     availability_zone = "${element( aws_subnet.zone-subnet.*.availability_zone, count.index )}"
     instance_type = "${var.instance_type}"
     key_name = "${lookup(var.key_name, var.aws_region)}"
-#   security_groups = ["${aws_security_group.docker-host.name}"]
+    vpc_security_group_ids = ["${aws_security_group.docker.id}"]
     subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
 
     tags {
@@ -101,6 +131,7 @@ resource "aws_instance" "docker" {
 #        command = "./provision-instance.sh ${self.public_ip} ${lookup(var.key_path, var.aws_region)}"
 #    }
 }
+
 
 resource "aws_elb" "load-balancer" {
     name = "load-balancer"

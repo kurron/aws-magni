@@ -38,11 +38,6 @@ variable "az_count" {
     default = 1 
 }
 
-variable "docker_instance_count" {
-    description = "How many Docker instances to spin up."
-    default = 1 
-}
-
 variable "key_name" {
     description = "Name of the SSH keypair to use in AWS."
     default = {
