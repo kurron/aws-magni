@@ -65,32 +65,33 @@ resource "aws_subnet" "zone-subnet" {
     }
 }
 
-resource "aws_route_table_association" "subnet-route" {
-    count = "${var.az_count}" 
-    subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
-    route_table_id = "${aws_route_table.internet.id}"
-}
-
-resource "aws_elasticache_subnet_group" "redis" {
-    description = "Subnet group for the Redis cluster"
-    name = "redis-cluster"
+resource "aws_network_acl" "asgard" {
+    vpc_id = "${aws_vpc.asgard.id}"
     subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
-}
 
-resource "aws_elasticache_cluster" "redis" {
-    cluster_id = "asgard"
-    engine = "redis"
-    engine_version = "2.8.19"
-    node_type = "cache.t2.micro"
-    num_cache_nodes = 1
-    parameter_group_name = "default.redis2.8"
-    port = 6379
-    subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
+    egress {
+        protocol = "tcp"
+        rule_no = 100
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 0
+        to_port = 65535
+    }
+
+    ingress {
+        protocol = "tcp"
+        rule_no = 100
+        action = "allow"
+        cidr_block =  "0.0.0.0/0"
+        from_port = 22
+        to_port = 22
+    }
+
     tags {
-        Name = "Redis Cluster"
+        Name = "Default firewall rules"
         Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
-        Purpose = "Provides fault-tolerant Redis instances"
+        Purpose = "Subnet firewall rules"
         Provisioner = "${var.resource_provisioned_by}"
         Status = "${var.resource_status}"
     }
@@ -120,6 +121,37 @@ resource "aws_security_group" "docker" {
         Group = "${var.resource_group}"
         Owner = "${var.resource_owner}"
         Purpose = "Controls port access to the Docker containers"
+        Provisioner = "${var.resource_provisioned_by}"
+        Status = "${var.resource_status}"
+    }
+}
+
+resource "aws_route_table_association" "subnet-route" {
+    count = "${var.az_count}" 
+    subnet_id = "${element( aws_subnet.zone-subnet.*.id, count.index )}"
+    route_table_id = "${aws_route_table.internet.id}"
+}
+
+resource "aws_elasticache_subnet_group" "redis" {
+    description = "Subnet group for the Redis cluster"
+    name = "redis-cluster"
+    subnet_ids = ["${aws_subnet.zone-subnet.*.id}"]
+}
+
+resource "aws_elasticache_cluster" "redis" {
+    cluster_id = "asgard"
+    engine = "redis"
+    engine_version = "2.8.19"
+    node_type = "cache.t2.micro"
+    num_cache_nodes = 1
+    parameter_group_name = "default.redis2.8"
+    port = 6379
+    subnet_group_name = "${aws_elasticache_subnet_group.redis.name}" 
+    tags {
+        Name = "Redis Cluster"
+        Group = "${var.resource_group}"
+        Owner = "${var.resource_owner}"
+        Purpose = "Provides fault-tolerant Redis instances"
         Provisioner = "${var.resource_provisioned_by}"
         Status = "${var.resource_status}"
     }
@@ -162,9 +194,9 @@ resource "aws_elb" "load-balancer" {
     instances = ["${aws_instance.docker.*.id}"]
 #   security_groups = ["${aws_security_group.elb.id}"]
     cross_zone_load_balancing = true
-    idle_timeout = 400
+    idle_timeout = 60
     connection_draining = true
-    connection_draining_timeout = 400
+    connection_draining_timeout = 60
 
     listener {
         instance_port = 80
